@@ -13,11 +13,6 @@ sub new
 
 	my %args = @_;
 
-	foreach my $key ( keys %args )
-	{
-		print $key . ' => ' . $args{ $key } . "\n";
-	}
-
 	my $self = { dbh  => undef,
 		     ARGV => \%args,
 		     trim => sub
@@ -43,7 +38,8 @@ sub connect
 			$db_str = 'dbname';
 		}
 
-		$self -> { dbh } = DBI -> connect( sprintf( 'DBI:%s:database=%s;host=%s;port=%s',
+		$self -> { dbh } = DBI -> connect( sprintf( 'DBI:%s:%s=%s;host=%s;port=%s',
+							    $self -> { ARGV } -> { dbdriver },
 							    $db_str,
 							    $self -> { ARGV } -> { dbname },
 							    $self -> { ARGV } -> { dbhost },
