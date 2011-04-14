@@ -14,4 +14,9 @@ foreach my $key ( $config -> keys() )
 	print $key . ' => ' . $config -> get( $key ) . "\n";
 }
 
+unless( $core -> db() and $core -> mdb() )
+{
+	die $!;
+}
+
 exit 0;

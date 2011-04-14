@@ -43,13 +43,32 @@ sub config
 sub db
 {
 	my $self = shift;
-	return 1;
+
+	unless( defined $self -> { db } )
+	{
+		$self -> { db } = ACMBot::core::Db -> new( map{ $_ => $self -> { config } -> { $_ } } ( 'dbname', 'dbhost', 'dbuser', 'dbpass', 'dbport', 'dbdriver' ) );
+	}
+
+	return $self -> { db };
 }
 
 sub mdb
 {
 	my $self = shift;
-	return 1;
+
+	my $prep = sub
+	{
+		my $val = shift;
+		$val =~ s/^m//;
+		return $val;
+	};
+
+	unless( defined $self -> { mdb } )
+	{
+		$self -> { mdb } = ACMBot::core::Db -> new( map{ $prep -> ( $_ ) => $self -> { config } -> { $_ } } ( 'mdbname', 'mdbhost', 'mdbuser', 'mdbpass', 'mdbport', 'mdbdriver' ) );
+	}
+
+	return $self -> { mdb };
 }
 
 1;

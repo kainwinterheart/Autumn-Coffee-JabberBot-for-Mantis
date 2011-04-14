@@ -7,7 +7,6 @@ use strict;
 sub new
 {
 	my $proto = shift;
-
 	my $class = ( ref( $proto ) or $proto );
 
 	my $self = { config => undef,
@@ -19,7 +18,6 @@ sub new
 		     } };
 
 	bless( $self, $class );
-
 	return $self;
 }
 
