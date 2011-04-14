@@ -4,7 +4,7 @@ package ACMBot::core::XMPP;
 
 use strict;
 
-use Net::XMPP;
+use Net::XMPP 'Client';
 
 sub new
 {
@@ -14,6 +14,7 @@ sub new
 	my %args = @_;
 
 	my $self = { client => undef,
+		     roster => undef,
 		     ARGV => \%args };
 
 	bless( $self, $class );
@@ -32,7 +33,8 @@ sub connect
 
 	unless( defined $self -> { client } )
 	{
-		$self -> { client } = Net::XMPP::Client -> new();
+		$self -> { client } = Net::XMPP::Client -> new( debuglevel => ( $self -> { ARGV } -> { jdebug } or 0 ) );
+
 		$self -> { client } -> Connect( hostname       => $self -> { ARGV } -> { jhost },
 						port           => $self -> { ARGV } -> { jport },
 						connectiontype => $self -> { ARGV } -> { jctype },
@@ -48,6 +50,7 @@ sub connect
 						 resource => $self -> { ARGV } -> { jrsrc } );
 
 		$self -> { client } -> PresenceSend();
+		$self -> { roster } = $self -> { client } -> Roster();
 	}
 
 	return $self -> { client };
@@ -69,7 +72,13 @@ sub disconnect
 sub send
 {
 	my $self = shift;
-	return 1;
+	my %args = @_;
+
+	return $self -> client->MessageSend( to => $args{ 'to' },
+					     subject => '',
+					     body => $args{ 'body' },
+					     type => 'chat',
+					     priority => 10 );
 }
 
 1;
