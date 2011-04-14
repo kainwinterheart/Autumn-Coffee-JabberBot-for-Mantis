@@ -74,11 +74,11 @@ sub send
 	my $self = shift;
 	my %args = @_;
 
-	return $self -> client->MessageSend( to => $args{ 'to' },
-					     subject => '',
-					     body => $args{ 'body' },
-					     type => 'chat',
-					     priority => 10 );
+	return $self -> client -> MessageSend(  to       => $args{ 'to' },
+						subject  => '',
+						body     => $args{ 'body' },
+						type     => 'chat',
+						priority => 10  );
 }
 
 1;
