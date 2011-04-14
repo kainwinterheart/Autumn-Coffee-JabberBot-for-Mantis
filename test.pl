@@ -6,16 +6,29 @@ package ACMBot::test;
 
 use ACMBot::core;
 
-my $core = ACMBot::core -> new( config => 'acmbot.conf' );
-my $test = $core -> mdb();
+print "Connecting...\n";
 
-unless( $test )
+my $core = ACMBot::core -> new( config => 'acmbot.conf' );
+
+unless( $core )
 {
 	die 'fail :(';
 }
 
-$test = $test -> select( 'select count(*) as id from mantis_bug_table;' );
+$core -> bot -> client -> Connected() ? print "Connected.\n" : die 'Can\'t connect.';
+print $core -> bot -> client -> GetErrorCode() . "\n";
 
-print $test -> { id } . "\n";
+while( 1 )
+{
+#	unless( defined $core -> bot -> client -> Process( 5 ) )
+#	{
+#		last;
+#	}
+	sleep( 1 );
+}
+
+# $test = $test -> select( 'select count(*) as id from mantis_bug_table;' );
+
+# print $test -> { id } . "\n";
 
 exit 0;

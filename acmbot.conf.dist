@@ -1,0 +1,26 @@
+mdbdriver = mysql
+mdbhost =
+mdbuser =
+mdbpass =
+mdbname =
+mdbport = 3306
+
+dbdriver = Pg
+dbhost =
+dbuser =
+dbpass =
+dbname =
+dbport = 5432
+
+usesamedb = 0
+
+jhost =
+jport = 5222
+jtls = 1
+
+jctype = tcpip
+
+juser =
+jdomain =
+jpass =
+jrsrc = bot

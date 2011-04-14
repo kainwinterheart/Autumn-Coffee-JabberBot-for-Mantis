@@ -23,6 +23,12 @@ sub new
 		     } };
 
 	bless( $self, $class );
+
+	unless( $self -> dbh() )
+	{
+		$self = 0;
+	}
+
 	return $self;
 }
 
@@ -49,6 +55,13 @@ sub connect
 	}
 
 	return $self -> { dbh };
+}
+
+sub disconnect
+{
+	my $self = shift;
+	my $dbh = $self -> dbh();
+	return $dbh -> disconnect();
 }
 
 sub dbh

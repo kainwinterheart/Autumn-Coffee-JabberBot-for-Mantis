@@ -41,10 +41,13 @@ sub load
 	{
 		foreach my $line ( @data )
 		{
-			my @pair = map{ $self -> { trim }( $_ ) } ( $line =~ m/^(.+?)=(.+?)$/g );
+			my @pair = map{ $self -> { trim }( scalar $_ ) } ( $line =~ m/^(.+?)=(.+?)$/g );
 			if( ( scalar @pair ) == 2 )
 			{
-				%config = ( %config, @pair );
+				unless( $pair[ 0 ] =~ m/^#/ )
+				{
+					%config = ( %config, @pair );
+				}
 			}
 		}
 	} else
@@ -67,6 +70,12 @@ sub keys
 	my $self = shift;
 	my $proxy = $self -> { config };
 	return ( keys %$proxy );
+}
+
+sub full
+{
+	my $self = shift;
+	return $self -> { config };
 }
 
 1;

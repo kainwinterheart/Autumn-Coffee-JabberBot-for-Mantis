@@ -6,6 +6,7 @@ use strict;
 
 use ACMBot::core::Config;
 use ACMBot::core::Db;
+use ACMBot::core::XMPP;
 
 sub new
 {
@@ -17,13 +18,17 @@ sub new
 	my $self = { config => undef,
 		     db     => undef,
 		     mdb    => undef,
+		     bot    => undef,
 		     ARGV   => \%args };
 
 	bless( $self, $class );
 
-	unless( $self -> config( $args{ config } ) )
+	unless( $self -> config( $args{ config } ) and
+		$self -> db() and
+		$self -> mdb() and
+		$self -> bot() )
 	{
-		die $!;
+		$self = 0;
 	}
 
 	return $self;
@@ -46,9 +51,27 @@ sub config
 	return $self ->  { config };
 }
 
+sub bot
+{
+	my $self = shift;
+
+	unless( defined $self -> { bot } )
+	{
+		my $config = $self -> config -> full();
+		$self -> { bot } = ACMBot::core::XMPP -> new( %$config );
+	}
+
+	return $self -> { bot };
+}
+
 sub db
 {
 	my $self = shift;
+
+	if( ( $self -> config -> get( 'usesamedb' ) eq '1' ) and defined $self -> { mdb } )
+	{
+		$self -> { db } = $self -> { mdb };
+	}
 
 	unless( defined $self -> { db } )
 	{
@@ -62,15 +85,20 @@ sub mdb
 {
 	my $self = shift;
 
-	my $prep = sub
+	if( ( $self -> config -> get( 'usesamedb' ) eq '1' ) and defined $self -> { db } )
 	{
-		my $val = shift;
-		$val =~ s/^m//;
-		return $val;
-	};
+		$self -> { mdb } = $self -> { db };
+	}
 
 	unless( defined $self -> { mdb } )
 	{
+		my $prep = sub
+		{
+			my $val = shift;
+			$val =~ s/^m//;
+			return $val;
+		};
+
 		$self -> { mdb } = ACMBot::core::Db -> new( map{ $prep -> ( $_ ) => $self -> config -> get( $_ ) } ( 'mdbname', 'mdbhost', 'mdbuser', 'mdbpass', 'mdbport', 'mdbdriver' ) );
 	}
 
