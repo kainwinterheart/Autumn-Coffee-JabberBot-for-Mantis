@@ -12,9 +12,9 @@ sub new
 	my $self = { config => undef,
 		     trim => sub
 		     {
-		          my $val = shift;
-		          $val =~ s/^\s+|\s+$//g;
-		          return $val;
+		             my $val = shift;
+		             $val =~ s/^\s+|\s+$//g;
+		             return $val;
 		     } };
 
 	bless( $self, $class );

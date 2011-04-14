@@ -6,17 +6,27 @@ package ACMBot::test;
 
 use ACMBot::core;
 
-my $core = ACMBot::core -> new( config => 'acmbot.conf' );
-my $config = $core -> config();
+my $core = ACMBot::core -> new( config => '/home/kain/git-projects/perl/acmantisbot/acmbot.conf' );
+$core -> db();
+$core -> mdb();
+#my $test = $core -> mdb();
 
-foreach my $key ( $config -> keys() )
-{
-	print $key . ' => ' . $config -> get( $key ) . "\n";
-}
+# my $conf = $core -> config();
 
-unless( $core -> db() and $core -> mdb() )
-{
-	die $!;
-}
+#foreach my $key ( $conf -> keys() )
+#{
+#	print $key . ' => ' . $conf -> get( $key ) . "\n";
+#}
+
+#print $test -> connect();
+
+#unless( $test )
+#{
+#	die 'fail :(';
+#}
+
+# $test = $test -> select( 'select count(*) as id from mantis_bug_table;' );
+
+#print $test -> { id } . "\n";
 
 exit 0;

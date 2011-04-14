@@ -20,6 +20,12 @@ sub new
 		     ARGV   => \%args };
 
 	bless( $self, $class );
+
+	unless( $self -> config( $args{ config } ) )
+	{
+		die $!;
+	}
+
 	return $self;
 }
 
@@ -29,7 +35,7 @@ sub config
 
 	unless( defined $self ->  { config } )
 	{
-		$self ->  { config } = ACMBot::core::Config -> new();
+		$self -> { config } = ACMBot::core::Config -> new();
 
 		unless( $self ->  { config } -> load( ( $cfile or $self -> { ARGV } -> { config } ) ) )
 		{
@@ -46,7 +52,7 @@ sub db
 
 	unless( defined $self -> { db } )
 	{
-		$self -> { db } = ACMBot::core::Db -> new( map{ $_ => $self -> { config } -> { $_ } } ( 'dbname', 'dbhost', 'dbuser', 'dbpass', 'dbport', 'dbdriver' ) );
+		$self -> { db } = ACMBot::core::Db -> new( map{ $_ => $self -> config -> get( $_ ) } ( 'dbname', 'dbhost', 'dbuser', 'dbpass', 'dbport', 'dbdriver' ) );
 	}
 
 	return $self -> { db };
@@ -65,7 +71,7 @@ sub mdb
 
 	unless( defined $self -> { mdb } )
 	{
-		$self -> { mdb } = ACMBot::core::Db -> new( map{ $prep -> ( $_ ) => $self -> { config } -> { $_ } } ( 'mdbname', 'mdbhost', 'mdbuser', 'mdbpass', 'mdbport', 'mdbdriver' ) );
+		$self -> { mdb } = ACMBot::core::Db -> new( map{ $prep -> ( $_ ) => $self -> config -> get( $_ ) } ( 'mdbname', 'mdbhost', 'mdbuser', 'mdbpass', 'mdbport', 'mdbdriver' ) );
 	}
 
 	return $self -> { mdb };
