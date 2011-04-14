@@ -4,14 +4,10 @@ use strict;
 
 package ACMBot::test;
 
-use ACMBot::core::Config;
+use ACMBot::core;
 
-my $config = ACMBot::core::Config -> new();
-
-unless( $config -> load( '/home/kain/git-projects/perl/acmantisbot/acmbot.conf' ) )
-{
-	die $!;
-}
+my $core = ACMBot::core -> new( config => 'acmbot.conf' );
+my $config = $core -> config();
 
 foreach my $key ( $config -> keys() )
 {

@@ -25,12 +25,12 @@ sub new
 
 sub load
 {
-	my ( $self, $file ) = @_;
+	my $self = shift;
 
 	my @data = ();
 	my %config = ();
 
-	if( open( FILE, '<', $file ) )
+	if( open( FILE, '<', shift ) )
 	{
 		@data = <FILE>;
 		close( FILE );
