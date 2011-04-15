@@ -8,6 +8,8 @@ use ACMBot::core::Config;
 use ACMBot::core::Db;
 use ACMBot::core::XMPP;
 
+use ACMBot::mantis;
+
 sub new
 {
 	my $proto = shift;
@@ -19,14 +21,15 @@ sub new
 		     db     => undef,
 		     mdb    => undef,
 		     bot    => undef,
+		     mantis => undef,
 		     ARGV   => \%args };
 
 	bless( $self, $class );
 
 	unless( $self -> config( $args{ config } ) and
-		$self -> db() and
-		$self -> mdb() and
-		$self -> bot() )
+		$self -> dbup() and
+		$self -> bot() and
+		$self -> mantis() )
 	{
 		$self = 0;
 	}
@@ -62,6 +65,36 @@ sub bot
 	}
 
 	return $self -> { bot };
+}
+
+sub mantis
+{
+	my $self = shift;
+
+	unless( defined $self -> { mantis } )
+	{
+		$self -> { mantis } = ACMBot::mantis -> new( version => $self -> config -> get( 'mver' ),
+							     dbh     => $self -> mdb() );
+	}
+
+	return $self -> { mantis };
+}
+
+sub dbup
+{
+	my $self = shift;
+	my $result = 0;
+
+	if( $self -> config -> get( 'usesamedb' ) eq '1' )
+	{
+		$result = ( ( $self -> db() or $self -> mdb() ) or
+			    ( $self -> mdb() or $self -> db() ) );
+	} else
+	{
+		$result = ( $self -> db() and $self -> mdb() );
+	}
+
+	return $result;
 }
 
 sub db

@@ -1,3 +1,7 @@
+# for details look in the README
+
+
+# mantis database connection settings
 mdbdriver = mysql
 mdbhost =
 mdbuser =
@@ -5,6 +9,10 @@ mdbpass =
 mdbname =
 mdbport = 3306
 
+# mantis version
+mver = 1.1.2
+
+# bot database connection settings
 dbdriver = Pg
 dbhost =
 dbuser =
@@ -12,14 +20,18 @@ dbpass =
 dbname =
 dbport = 5432
 
+# if 1 - uses same db for bot and mantis
 usesamedb = 0
 
+# jabber connection settings
 jhost =
 jport = 5222
 jtls = 1
 
+# jabber connection type (tcpip or http)
 jctype = tcpip
 
+# jabber user settings
 juser =
 jdomain =
 jpass =

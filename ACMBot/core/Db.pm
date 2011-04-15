@@ -24,9 +24,9 @@ sub new
 
 	bless( $self, $class );
 
-	unless( $self -> dbh() )
+	unless( $self -> connect() )
 	{
-		$self = 0;
+		$self = undef;
 	}
 
 	return $self;
@@ -60,8 +60,16 @@ sub connect
 sub disconnect
 {
 	my $self = shift;
-	my $dbh = $self -> dbh();
-	return $dbh -> disconnect();
+
+	if( defined $self -> { dbh } )
+	{
+		if( $self -> { dbh } -> disconnect() )
+		{
+			$self -> { dbh } = undef;
+		}
+	}
+
+	return defined $self -> { dbh };
 }
 
 sub dbh
@@ -73,23 +81,19 @@ sub dbh
 sub do
 {
 	my $self = shift;
-	my $dbh = $self -> dbh();
-	return $dbh -> do( shift );
+	return $self -> dbh -> do( shift );
 }
 
 sub quote
 {
 	my $self = shift;
-	my $dbh = $self -> dbh();
-	return $dbh -> quote( shift );
+	return $self -> dbh -> quote( shift );
 }
 
 sub select
 {
 	my $self = shift;
-
-	my $dbh = $self -> dbh();
-	my $sth = $dbh -> prepare( shift );
+	my $sth = $self -> dbh -> prepare( shift );
 
 	{
 		my $result = $sth -> execute();
@@ -108,15 +112,12 @@ sub select
 sub multi_select
 {
 	my $self = shift;
-
-	my $dbh = $self -> dbh();
-	my $sth = $dbh -> prepare( shift );
+	my $sth = $self -> dbh -> prepare( shift );
 
 	{
-		my $result = $sth -> execute();
-		unless( $result )
+		unless( $sth -> execute() )
 		{
-			return 0;
+			return undef;
 		}
 	}
 
@@ -124,7 +125,7 @@ sub multi_select
 
 	while( my $row = $sth -> fetchrow_hashref() )
 	{
-		$output{ $self -> { trim }( $row -> { 'id' } ) } = $self -> { trim }( $row );
+		$output{ $self -> { trim } -> ( $row -> { 'id' } ) } = $self -> { trim } -> ( $row );
 	}
 
 	$sth -> finish();

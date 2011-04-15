@@ -21,7 +21,7 @@ sub new
 
 	unless( $self -> client -> Connected() )
 	{
-		$self = 0;
+		$self = undef;
 	}
 
 	return $self;
@@ -41,6 +41,12 @@ sub connect
 						componentname  => $self -> { ARGV } -> { jdomain },
 						tls            => $self -> { ARGV } -> { jtls } );
 
+		unless( $self -> { client } -> Connected() )
+		{
+			$self -> { client } = undef;
+			return undef;
+		}
+
 		my $sid = $self -> { client } -> { SESSION }{ id };
 
 		$self -> { client } -> { STREAM } -> { SIDS } -> { $sid } -> { hostname } = $self -> { ARGV } -> { jdomain };
@@ -51,6 +57,11 @@ sub connect
 
 		$self -> { client } -> PresenceSend();
 		$self -> { roster } = $self -> { client } -> Roster();
+	}
+
+	unless( $self -> { client } -> Connected() )
+	{
+		$self -> { client } = undef;
 	}
 
 	return $self -> { client };
@@ -65,8 +76,16 @@ sub client
 sub disconnect
 {
 	my $self = shift;
-	my $client = $self -> client();
-	return $client -> Disconnect();
+
+	if( defined $self -> { client } )
+	{
+		if( not $self -> { client } -> Connected() or $self -> { client } -> Disconnect() )
+		{
+			$self -> { client } = undef;
+		}
+	}
+
+	return defined $self -> { client };
 }
 
 sub send

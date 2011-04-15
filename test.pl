@@ -24,6 +24,20 @@ $core -> bot -> client -> SetMessageCallBacks( normal    => undef,
 					       headline  => undef,
 					       error     => undef );
 
+my $record = $core -> mantis -> get( bug => 2, last => { time => '1970-01-01 00:00:01' } );
+
+foreach my $key ( sort{ $a <=> $b } ( keys %$record ) )
+{
+	my $row = $record -> { $key };
+
+	foreach my $col ( keys %$row )
+	{
+		print $col . ' => ' . $row -> { $col } . "\n";
+	}
+
+	print "-------\n";
+}
+
 while( 1 )
 {
 	my $status = $core -> bot -> client -> Process( 5 );

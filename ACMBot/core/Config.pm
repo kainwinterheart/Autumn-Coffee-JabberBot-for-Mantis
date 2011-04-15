@@ -41,7 +41,7 @@ sub load
 	{
 		foreach my $line ( @data )
 		{
-			my @pair = map{ $self -> { trim }( scalar $_ ) } ( $line =~ m/^(.+?)=(.+?)$/g );
+			my @pair = map{ $self -> { trim } -> ( scalar $_ ) } ( $line =~ m/^(.+?)=(.+?)$/g );
 			if( ( scalar @pair ) == 2 )
 			{
 				unless( $pair[ 0 ] =~ m/^#/ )
@@ -55,8 +55,8 @@ sub load
 		return 0;
 	}
 
-	$self -> { config } = \%config;
-	return 1;
+	$self -> { config } = ( \%config or undef );
+	return defined $self -> { config };
 }
 
 sub get
