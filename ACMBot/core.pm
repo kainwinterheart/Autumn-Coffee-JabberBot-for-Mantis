@@ -10,6 +10,8 @@ use ACMBot::core::XMPP;
 
 use ACMBot::mantis;
 
+our $Actual = undef;
+
 sub new
 {
 	my $proto = shift;
@@ -31,7 +33,12 @@ sub new
 		$self -> bot() and
 		$self -> mantis() )
 	{
-		$self = 0;
+		$self = undef;
+	}
+
+	if( defined $self )
+	{
+		$ACMBot::core::Actual = $self;
 	}
 
 	return $self;

@@ -15,7 +15,8 @@ sub new
 
 	my $self = { client => undef,
 		     roster => undef,
-		     ARGV => \%args };
+		     presence_db => {},
+		     ARGV   => \%args };
 
 	bless( $self, $class );
 
@@ -47,6 +48,8 @@ sub connect
 			return undef;
 		}
 
+		$self -> { client } -> SetCallBacks( presence => \&__update_presence_db );
+
 		my $sid = $self -> { client } -> { SESSION }{ id };
 
 		$self -> { client } -> { STREAM } -> { SIDS } -> { $sid } -> { hostname } = $self -> { ARGV } -> { jdomain };
@@ -56,7 +59,10 @@ sub connect
 						 resource => $self -> { ARGV } -> { jrsrc } );
 
 		$self -> { client } -> PresenceSend();
-		$self -> { roster } = $self -> { client } -> Roster();
+		unless( $self -> roster_update() )
+		{
+			die 'Can\'t get roster.';
+		}
 	}
 
 	unless( $self -> { client } -> Connected() )
@@ -98,6 +104,77 @@ sub send
 						body     => $args{ 'body' },
 						type     => 'chat',
 						priority => 10  );
+}
+
+sub roster_update
+{
+	my $self = shift;
+
+	#unless( defined )
+	{
+		#my %proxy = $self -> { client } -> RosterGet();
+		#$self -> { roster } = \%proxy;
+		$self -> { client } -> RosterRequest();
+		$self -> { roster } = $self -> { client } -> Roster();
+	}
+
+	#$self -> { roster } = $self -> { roster } -> RosterRequest();
+
+#	foreach my $key ( keys %{ $self -> { roster } } )
+#	{
+#		print $key . "\n";
+#	}
+
+	return $self -> { roster };
+}
+
+sub get_addresses
+{
+	my ( $self, $jid ) = @_;
+	return grep{ $_ } @{ $self -> { presence_db } -> { $jid } };
+}
+
+sub __update_presence_db
+{
+	my ( $sid, $msg ) = @_;
+	my $self = $ACMBot::core::Actual -> bot();
+
+	unless( $self and $sid and $msg )
+	{
+		return 0;
+	}
+
+	my $jid  = $msg -> GetFrom();
+	my $base = $msg -> GetFrom( 'jid' ) -> GetJID( 'base' );
+
+	my $present = 0;
+
+	my $hdb = $self -> { presence_db };
+
+	unless( defined $hdb -> { $base } )
+	{
+		$hdb -> { $base } = [];
+	}
+
+	my @db = @{ $hdb -> { $base } };
+
+	foreach my $db_jid ( @db )
+	{
+		if( $db_jid eq $jid )
+		{
+			$present++;
+			last;
+		}
+	}
+
+	unless( $present )
+	{
+		push @db, $jid;
+		$hdb -> { $base } = [ @db ];
+		$self -> { presence_db } = $hdb;
+	}
+
+	return defined $self -> { presence_db } -> { $base };
 }
 
 1;

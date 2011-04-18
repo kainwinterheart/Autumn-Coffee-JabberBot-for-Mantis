@@ -18,11 +18,13 @@ unless( $core )
 $core -> bot -> client -> Connected() ? print "Connected.\n" : die 'Can\'t connect.';
 # print $core -> bot -> client -> GetErrorCode() . "\n";
 
-$core -> bot -> client -> SetMessageCallBacks( normal    => undef,
-					       chat      => \&cb,
-					       groupchat => undef,
-					       headline  => undef,
-					       error     => undef );
+# $core -> bot -> client -> SetCallBacks( presence => \&pb );
+$core -> bot -> client -> SetCallBacks( message => \&cb );
+#$core -> bot -> client -> SetMessageCallBacks( normal    => undef,
+#					       chat      => \&cb,
+#					       groupchat => undef,
+#					       headline  => undef,
+#					       error     => undef );
 
 my $record = $core -> mantis -> get( bug => 2, last => { time => '1970-01-01 00:00:01' } );
 
@@ -60,4 +62,7 @@ sub cb
 {
 	my ( $sid, $msg ) = @_;
 	$core -> bot -> send( to => $msg -> GetFrom(), body => $msg -> GetBody() );
+	print join( "\n", $core -> bot -> get_addresses( $msg -> GetFrom( 'jid' ) -> GetJID( 'base' ) ) ) . "\n\n\n";
 }
+
+1;
