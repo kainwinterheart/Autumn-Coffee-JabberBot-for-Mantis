@@ -15,8 +15,6 @@ unless( $core )
 
 $core -> bot -> client -> SetCallBacks( message => \&cb );
 
-# my $record = $core -> mantis -> get( bug => 2, last => { time => '1970-01-01 00:00:01' } );
-
 while( defined $core -> bot -> client -> Process( 5 ) )
 {
 	1;
@@ -28,6 +26,81 @@ sub cb
 {
 	my ( $sid, $msg ) = @_;
 	$core -> bot -> send( to => $msg -> GetFrom(), body => $msg -> GetBody() );
+}
+
+sub register_user
+{
+	my $jid = shift;
+
+	unless( $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) ) )
+	{
+		unless( $core -> db -> do( sprintf( 'insert into ac_bot_users (jabber) values (%s) ', $core -> db -> quote( $jid ) ) ) )
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+sub bind_user
+{
+	my ( $jid, $mantis_id ) = @_;
+
+	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
+
+	unless( $usrrec )
+	{
+		return 0;
+	}
+
+	unless( $core -> db -> do( sprintf( 'update ac_bot_users set mantis_id=%d where jabber=%s', $mantis_id, $core -> db -> quote( $jid ) ) ) )
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+sub subscribe_to_bug
+{
+	my ( $jid, $bug ) = @_;
+
+	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
+	my $bugrec = $core -> db -> select( sprintf( 'select users from ac_bot_prefs where bug_id=%d', $bug ) );
+
+	unless( $usrrec )
+	{
+		return 0;
+	}
+
+	unless( $usrrec -> { 'mantis_id' } )
+	{
+		return 0;
+	}
+
+	if( $bugrec )
+	{
+		my @users = split( /\:/, $bugrec -> { 'users' } );
+
+		unless( &in( $usrrec -> { 'id' }, @users ) )
+		{
+			push @users, $usrrec -> { 'id' };
+		}
+
+		unless( $core -> db -> do( sprintf( 'update ac_bot_prefs set users=%s where bug_id=%d', $core -> db -> quote( join( ':', @users ) ), $bug ) ) )
+		{
+			return 0;
+		}
+	} else
+	{
+		unless( $core -> db -> do( sprintf( 'insert into ac_bot_prefs (users, bug_id) values( %s, %d )', $core -> db -> quote( $usrrec -> { 'id' } ), $bug ) ) )
+		{
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 sub get_subscription_info
@@ -51,7 +124,6 @@ sub get_subscription_info
 			next;
 		}
 
-		my @userlist = split( /\:/, $prefs -> { $bug } -> { 'users' } );
 		my @msg = ();
 		my $lastid = 0;
 
@@ -67,6 +139,13 @@ sub get_subscription_info
 				$lastid = $note;
 			}
 		}
+
+		unless( scalar @msg )
+		{
+			next;
+		}
+
+		my @userlist = split( /\:/, $prefs -> { $bug } -> { 'users' } );
 
 		foreach my $userid ( @userlist )
 		{
@@ -147,6 +226,24 @@ sub form_msg
 	my $output = '';
 
 	return $output;
+}
+
+sub in
+{
+	my $search = shift;
+	my @array = @_;
+	my $result = 0;
+
+	foreach my $element ( @array )
+	{
+		if( $element eq $search )
+		{
+			$result++;
+			last;
+		}
+	}
+
+	return $result;
 }
 
 1;
