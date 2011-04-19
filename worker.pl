@@ -13,7 +13,8 @@ unless( $core )
 	die 'fail :(';
 }
 
-$core -> bot -> client -> SetCallBacks( message => \&cb );
+$core -> bot -> client -> SetCallBacks( message => \&message_handler );
+$core -> set_auth_callback( \&register_user );
 
 while( defined $core -> bot -> client -> Process( 5 ) )
 {
@@ -22,23 +23,59 @@ while( defined $core -> bot -> client -> Process( 5 ) )
 
 exit 0;
 
-sub cb
+sub echo
 {
 	my ( $sid, $msg ) = @_;
 	$core -> bot -> send( to => $msg -> GetFrom(), body => $msg -> GetBody() );
 }
 
+sub message_handler
+{
+	my ( $sid, $msg ) = @_;
+
+	my $jid = $msg -> GetFrom( 'jid' ) -> GetJID( 'base' );
+	my $cmd = $msg -> GetBody();
+
+	$cmd =~ s/^\s+|\s+$//g;
+
+	if( $cmd =~ m/^subscribe\s(\d+)$/gi )
+	{
+		if( &subscribe_to_bug( $jid, $1 ) )
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Successfully subscribed.' );
+		} else
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Subscription failed.' );
+		}
+	} elsif( $cmd =~ m/^unsubscribe\s(\d+)$/gi )
+	{
+		if( &unsubscribe_from_bug( $jid, $1 ) )
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Successfully unsubscribed.' );
+		} else
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Unsubscription failed.' );
+		}
+	}
+
+	return 1;
+}
+
 sub register_user
 {
-	my $jid = shift;
+	my ( $sid, $msg ) = @_;
+	my $self = $ACMBot::core::Actual;
+	my $jid = $msg -> GetFrom( 'jid' ) -> GetJID( 'base' );
 
-	unless( $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) ) )
+	unless( $self -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) ) )
 	{
-		unless( $core -> db -> do( sprintf( 'insert into ac_bot_users (jabber) values (%s) ', $core -> db -> quote( $jid ) ) ) )
+		unless( $self -> db -> do( sprintf( 'insert into ac_bot_users (jabber) values (%s) ', $core -> db -> quote( $jid ) ) ) )
 		{
 			return 0;
 		}
 	}
+
+	$self -> bot -> client -> Subscription( type => 'subscribe', to => $msg -> GetFrom() );
 
 	return 1;
 }
@@ -101,6 +138,48 @@ sub subscribe_to_bug
 	}
 
 	return 1;
+}
+
+sub unsubscribe_from_bug
+{
+	my ( $jid, $bug ) = @_;
+
+	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
+	my $bugrec = $core -> db -> select( sprintf( 'select users from ac_bot_prefs where bug_id=%d', $bug ) );
+
+	unless( $usrrec )
+	{
+		return 0;
+	}
+
+	unless( $usrrec -> { 'mantis_id' } )
+	{
+		return 0;
+	}
+
+	my $result = 0;
+
+	if( $bugrec )
+	{
+		my @users = split( /\:/, $bugrec -> { 'users' } );
+
+		unless( &in( $usrrec -> { 'id' }, @users ) )
+		{
+			return 0;
+		}
+ 
+		@users = &arr_del( $usrrec -> { 'id' }, @users );
+
+		unless( scalar @users )
+		{
+			$result = $core -> db -> do( sprintf( 'delete from ac_bot_prefs where bug_id=%d', $bug ) );
+		} else
+		{
+			$result = $core -> db -> do( sprintf( 'update ac_bot_prefs set users=%s where bug_id=%d', $core -> db -> quote( join( ':', @users ) ), $bug ) );
+		}
+	}
+
+	return $result;
 }
 
 sub get_subscription_info
@@ -244,6 +323,26 @@ sub in
 	}
 
 	return $result;
+}
+
+sub arr_del
+{
+	my $search = shift;
+	my @array = @_;
+
+	if( &in( $search, @array ) )
+	{
+		for( my $i = 0; $i <= $#array; $i++ )
+		{
+			if( $array[ $i ] eq $search )
+			{
+				delete $array[ $i ];
+				last;
+			}
+		}
+	}
+
+	return @array;
 }
 
 1;

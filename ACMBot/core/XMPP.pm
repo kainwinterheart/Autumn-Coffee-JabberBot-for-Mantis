@@ -134,6 +134,19 @@ sub get_addresses
 	return grep{ $_ } @{ $self -> { presence_db } -> { $jid } };
 }
 
+sub __handle_subscribe
+{
+	my ( $self, $sid, $msg ) = @_;
+	my ( $core, $result ) = ( $ACMBot::core::Actual, 1 );
+
+	if( defined $core -> { auth_callback } )
+	{
+		$result = $core -> { auth_callback } -> ( $sid, $msg );
+	}
+
+	return $result;
+}
+
 sub __update_presence_db
 {
 	my ( $sid, $msg ) = @_;
@@ -142,6 +155,11 @@ sub __update_presence_db
 	unless( $self and $sid and $msg )
 	{
 		return 0;
+	}
+
+	if( $msg -> GetType() eq 'subscribe' )
+	{
+		return $self -> __handle_subscribe( $sid, $msg );
 	}
 
 	my $jid  = $msg -> GetFrom();

@@ -29,6 +29,7 @@ sub new
 		     mdb    => undef,
 		     bot    => undef,
 		     mantis => undef,
+		     auth_callback => undef,
 		     ARGV   => \%args };
 
 	bless( $self, $class );
@@ -148,6 +149,13 @@ sub mdb
 	}
 
 	return $self -> { mdb };
+}
+
+sub set_auth_callback
+{
+	my $self = shift;
+	$self -> { auth_callback } = shift;
+	return defined $self -> { auth_callback };
 }
 
 1;
