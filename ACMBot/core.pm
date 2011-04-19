@@ -14,6 +14,11 @@ our $Actual = undef;
 
 sub new
 {
+	if( defined $ACMBot::core::Actual )
+	{
+		return $ACMBot::core::Actual;
+	}
+
 	my $proto = shift;
 	my $class = ( ref( $proto ) or $proto );
 
