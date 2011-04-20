@@ -38,7 +38,7 @@ sub message_handler
 
 	$cmd =~ s/^\s+|\s+$//g;
 
-	if( $cmd =~ m/^subscribe\s(\d+)$/gi )
+	if( $cmd =~ m/^subscribe\s(\d+)$/i )
 	{
 		if( &subscribe_to_bug( $jid, $1 ) )
 		{
@@ -47,7 +47,7 @@ sub message_handler
 		{
 			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Subscription failed.' );
 		}
-	} elsif( $cmd =~ m/^unsubscribe\s(\d+)$/gi )
+	} elsif( $cmd =~ m/^unsubscribe\s(\d+)$/i )
 	{
 		if( &unsubscribe_from_bug( $jid, $1 ) )
 		{
@@ -55,6 +55,15 @@ sub message_handler
 		} else
 		{
 			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Unsubscription failed.' );
+		}
+	} elsif( $cmd =~ m/^auth\suser\s(.+?)\spass\s(.+?)$/i )
+	{
+		if( &bind_user( $jid, $1, $2 ) )
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Successfully bound to Mantis user.' );
+		} else
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Binding to Mantis user failed.' );
 		}
 	}
 
@@ -82,7 +91,14 @@ sub register_user
 
 sub bind_user
 {
-	my ( $jid, $mantis_id ) = @_;
+	my ( $jid, $user, $pass ) = @_;
+
+	my $mantis_id = $core -> mantis -> check_user( username => $user, password => $pass );
+
+	unless( $mantis_id )
+	{
+		return 0;
+	}
 
 	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
 
@@ -91,7 +107,7 @@ sub bind_user
 		return 0;
 	}
 
-	unless( $core -> db -> do( sprintf( 'update ac_bot_users set mantis_id=%d where jabber=%s', $mantis_id, $core -> db -> quote( $jid ) ) ) )
+	unless( $core -> db -> do( sprintf( 'update ac_bot_users set mantis_id=%d where id=%d', $mantis_id, $usrrec -> { 'id' } ) ) )
 	{
 		return 0;
 	}
@@ -103,16 +119,18 @@ sub subscribe_to_bug
 {
 	my ( $jid, $bug ) = @_;
 
-	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
+	my $usrrec = $core -> db -> select( sprintf( 'select id, mantis_id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
 	my $bugrec = $core -> db -> select( sprintf( 'select users from ac_bot_prefs where bug_id=%d', $bug ) );
 
 	unless( $usrrec )
 	{
+		print "Can't get userid for $jid\n\n";
 		return 0;
 	}
 
 	unless( $usrrec -> { 'mantis_id' } )
 	{
+		print "User is not bound.\n\n";
 		return 0;
 	}
 

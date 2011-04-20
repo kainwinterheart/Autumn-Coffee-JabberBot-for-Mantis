@@ -51,6 +51,29 @@ sub get_messages_for_ticket
 	return $dbh -> multi_select( $sql );
 }
 
+sub check_user
+{
+	my $self = shift;
+	my $dbh = $self -> { db };
+
+	unless( defined $dbh )
+	{
+		return 0;
+	}
+
+	my %args = @_;
+
+	my $record = $dbh -> select( sprintf( 'select id, password from mantis_user_table where username=%s;',
+					      $dbh -> quote( $self -> { trim } -> ( $args{ 'username' } ) ) ) );
+
+	unless( $record )
+	{
+		return 0;
+	}
+
+	return ( $record -> { 'password' } eq $self -> { trim } -> ( $args{ 'password' } ) ) ? $record -> { 'id' } : 0;
+}
+
 sub get
 {
 	my $self = shift;
