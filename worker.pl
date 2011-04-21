@@ -16,9 +16,41 @@ unless( $core )
 $core -> bot -> client -> SetCallBacks( message => \&message_handler );
 $core -> set_auth_callback( \&register_user );
 
-while( defined $core -> bot -> client -> Process( 5 ) )
+my $start = time();
+my $last = $start;
+
+while( 1 )
 {
-	1;
+	my $status = $core -> bot -> client -> Process( 1 );
+
+	if( defined $status )
+	{
+		if( ( $last - $start ) >= ( ( $core -> config -> get( 'timeout' ) || 5 ) * 60 ) )
+		{
+			my $data = &get_subscription_info();
+			if( $data )
+			{
+				unless( &send_jabber_notification( $data ) )
+				{
+					print "\n\nERROR: Can't send messages.\n\n";
+				}
+			} else
+			{
+				print "\n\nERROR: Can't get subscription info.\n\n";
+			}
+		}
+	} else
+	{
+		print "\n\nWARNING: Bot is not connected, trying to reconnect.\n\n";
+
+		unless( $core -> bot -> client -> Connected() )
+		{
+			print "\n\nNOTIFY: Reconnecting...\n\n";
+			sleep 5;
+		}
+
+		print "\n\nNOTIFY: Bot is online again.\n\n";
+	}
 }
 
 exit 0;
@@ -26,7 +58,11 @@ exit 0;
 sub echo
 {
 	my ( $sid, $msg ) = @_;
-	$core -> bot -> send( to => $msg -> GetFrom(), body => $msg -> GetBody() );
+
+	my $text = sprintf( "I don't know what means you message \"%s\".\nIf you want to know what I can do for you - send me just a four letter:\nhelp\nAlso have a nice day. :)",
+			    $msg -> GetBody() );
+
+	$core -> bot -> send( to => $msg -> GetFrom(), body => $text );
 }
 
 sub message_handler
@@ -37,6 +73,11 @@ sub message_handler
 	my $cmd = $msg -> GetBody();
 
 	$cmd =~ s/^\s+|\s+$//g;
+
+	unless( $cmd )
+	{
+		return 1;
+	}
 
 	if( $cmd =~ m/^subscribe\s(\d+)$/i )
 	{
@@ -65,6 +106,25 @@ sub message_handler
 		{
 			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Binding to Mantis user failed.' );
 		}
+	} elsif( $cmd =~ m/^debug$/i )
+	{
+		my $data = &get_subscription_info();
+		if( $data )
+		{
+			unless( &send_jabber_notification( $data ) )
+			{
+				$core -> bot -> send( to => $msg -> GetFrom(), body => 'Can\'t send messages.' );
+			}
+		} else
+		{
+			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Can\'t get subscription data.' );
+		}
+	} elsif( $cmd =~ m/^help$/i )
+	{
+		$core -> bot -> send( to => $msg -> GetFrom(), body => 'Help message is in progress. Sorry for that.' );
+	} else
+	{
+		&echo( $sid, $msg );
 	}
 
 	return 1;
@@ -226,14 +286,19 @@ sub get_subscription_info
 
 		foreach my $note ( keys %$last )
 		{
+			unless( int( $last -> { $note } -> { 'id' } ) )
+			{
+				next;
+			}
+
 			push @msg, { from => ( $last -> { $note } -> { 'realname' } or $last -> { $note } -> { 'username' } ),
 				     note => $last -> { $note } -> { 'note' },
 				     name => $last -> { $note } -> { 'summary' },
 				     link => sprintf( $core -> config -> get( 'link' ), $prefs -> { $bug } -> { 'bug_id' } ) };
 
-			if( $lastid < $note )
+			if( $lastid < $last -> { $note } -> { 'id' } )
 			{
-				$lastid = $note;
+				$lastid = $last -> { $note } -> { 'id' };
 			}
 		}
 
@@ -256,12 +321,15 @@ sub get_subscription_info
 			$users{ $userid } -> { 'msgdata' } = [ ( @$msgdata, @msg ) ];
 		}
 
-		unless( $core -> db -> do( sprintf( 'update ac_bot_prefs set last_msg_id=%d and last_msg_time=NOW() where id=%d;', $lastid, $bug ) ) )
+		# print "\n\n$lastid:$bug\n\n";
+
+		unless( $core -> db -> do( sprintf( 'update ac_bot_prefs set last_msg_id=%d, last_msg_time=NOW() where id=%d;', $lastid, $bug ) ) )
 		{
 			return 0;
 		}
 	}
 
+	if( scalar keys %users )
 	{
 		my $userdata = $core -> db -> multi_select( sprintf( 'select id, jabber from ac_bot_users where id in (%s);', join( ', ', keys %users ) ) );
 
@@ -320,7 +388,14 @@ sub send_jabber_notification
 sub form_msg
 {
 	my $msg = shift;
-	my $output = '';
+
+	unless( $msg -> { 'from' } and $msg -> { 'name' } )
+	{
+		return '';
+	}
+
+	my $output = sprintf( "%s sent you a message about \"%s\" ticket. Here's the message:\n\n%s\n\nLink to the ticket: %s",
+			      $msg -> { 'from' }, $msg -> { 'name' }, $msg -> { 'note' }, $msg -> { 'link' } );
 
 	return $output;
 }
