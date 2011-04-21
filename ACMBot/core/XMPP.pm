@@ -91,7 +91,7 @@ sub disconnect
 		}
 	}
 
-	return defined $self -> { client };
+	return not defined $self -> { client };
 }
 
 sub send

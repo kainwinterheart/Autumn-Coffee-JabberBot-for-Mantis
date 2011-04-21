@@ -43,7 +43,12 @@ while( 1 )
 	{
 		print "\n\nWARNING: Bot is not connected, trying to reconnect.\n\n";
 
-		unless( $core -> bot -> client -> Connected() )
+		while( not $core -> bot -> disconnect() )
+		{
+			sleep 1;
+		}
+
+		while( not $core -> bot -> client -> Connected() )
 		{
 			print "\n\nNOTIFY: Reconnecting...\n\n";
 			sleep 5;
