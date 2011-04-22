@@ -74,7 +74,7 @@ sub bot
 	unless( defined $self -> { bot } )
 	{
 		my $config = $self -> config -> full();
-		$self -> { bot } = ACMBot::core::XMPP -> new( %$config );
+		$self -> { bot } = ACMBot::core::XMPP -> new( ( %$config, ( callbacks => ( $self -> { ARGV } -> { 'callbacks' } || undef ) ) ) );
 	}
 
 	return $self -> { bot };
@@ -156,6 +156,12 @@ sub set_auth_callback
 	my $self = shift;
 	$self -> { auth_callback } = shift;
 	return defined $self -> { auth_callback };
+}
+
+sub set_callbacks
+{
+	my $self = shift;
+	return $self -> bot -> set_callbacks( @_ );
 }
 
 1;

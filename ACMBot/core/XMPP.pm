@@ -16,9 +16,15 @@ sub new
 	my $self = { client => undef,
 		     roster => undef,
 		     presence_db => {},
+		     callbacks => {},
 		     ARGV   => \%args };
 
 	bless( $self, $class );
+
+	if( defined $self -> { ARGV } -> { 'callbacks' } )
+	{
+		$self -> set_callbacks( ( %{ $self -> { ARGV } -> { 'callbacks' } }, ( '__flag__' => 1 ) ) );
+	}
 
 	unless( $self -> client -> Connected() )
 	{
@@ -48,7 +54,8 @@ sub connect
 			return undef;
 		}
 
-		$self -> { client } -> SetCallBacks( presence => \&__update_presence_db );
+		$self -> { callbacks } -> { presence } = \&__update_presence_db;
+		$self -> set_callbacks();
 
 		my $sid = $self -> { client } -> { SESSION }{ id };
 
@@ -71,6 +78,31 @@ sub connect
 	}
 
 	return $self -> { client };
+}
+
+sub set_callbacks
+{
+	my ( $self, $result, $flag ) = ( shift, 1, undef );
+	my %args = @_;
+
+	if( defined $args{ '__flag__' } )
+	{
+		$flag = 1;
+		delete $args{ '__flag__' };
+	}
+
+	foreach my $func ( keys %args )
+	{
+		$self -> { callbacks } -> { $func } = $args{ $func };
+		$result = ( $result and defined $self -> { callbacks } -> { $func } );
+	}
+
+	unless( defined $flag )
+	{
+		$self -> { client } -> SetCallBacks( %{ $self -> { callbacks } } );
+	}
+
+	return $result;
 }
 
 sub client

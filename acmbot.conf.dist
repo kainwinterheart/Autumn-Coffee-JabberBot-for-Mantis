@@ -36,3 +36,6 @@ juser =
 jdomain =
 jpass =
 jrsrc = bot
+
+# interval of processing subscriptions, in minutes
+timeout =

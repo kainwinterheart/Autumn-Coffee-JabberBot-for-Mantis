@@ -6,15 +6,18 @@ package ACMBot;
 
 use ACMBot::core;
 
-my $core = ACMBot::core -> new( config => 'acmbot.conf' );
+my $core = ACMBot::core -> new( config => 'acmbot.conf', callbacks => { message => \&message_handler } );
 
 unless( $core )
 {
-	die 'fail :(';
+	die "Can't create Core.";
 }
 
-$core -> bot -> client -> SetCallBacks( message => \&message_handler );
-$core -> set_auth_callback( \&register_user );
+unless( 1 #$core -> set_callbacks( message => \&message_handler )
+and     $core -> set_auth_callback( \&register_user ) )
+{
+	die 'Callbacks cannot be set.';
+}
 
 my $start = time();
 my $last = $start;
