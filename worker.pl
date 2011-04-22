@@ -435,20 +435,20 @@ sub arr_del
 {
 	my $search = shift;
 	my @array = @_;
+	my @new_array = ();
 
 	if( &in( $search, @array ) )
 	{
 		for( my $i = 0; $i <= $#array; $i++ )
 		{
-			if( $array[ $i ] eq $search )
+			unless( $array[ $i ] eq $search )
 			{
-				delete $array[ $i ];
-				last;
+				push @new_array, $array[ $i ];
 			}
 		}
 	}
 
-	return @array;
+	return @new_array;
 }
 
 1;

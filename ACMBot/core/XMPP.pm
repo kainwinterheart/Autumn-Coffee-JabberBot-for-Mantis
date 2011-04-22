@@ -99,6 +99,7 @@ sub set_callbacks
 
 	unless( defined $flag )
 	{
+		sleep 1;
 		$self -> { client } -> SetCallBacks( %{ $self -> { callbacks } } );
 	}
 
