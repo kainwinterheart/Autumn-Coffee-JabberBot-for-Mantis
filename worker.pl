@@ -54,7 +54,12 @@ while( 1 )
 		while( not $core -> bot -> client -> Connected() )
 		{
 			print "\n\nNOTIFY: Reconnecting...\n\n";
-			sleep 5;
+			sleep 1;
+		}
+
+		while( not $core -> db -> reconnect() or not $core -> mdb -> reconnect() )
+		{
+			sleep 1;
 		}
 
 		print "\n\nNOTIFY: Bot is online again.\n\n";
@@ -230,7 +235,7 @@ sub unsubscribe_from_bug
 {
 	my ( $jid, $bug ) = @_;
 
-	my $usrrec = $core -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
+	my $usrrec = $core -> db -> select( sprintf( 'select id, mantis_id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) );
 	my $bugrec = $core -> db -> select( sprintf( 'select users from ac_bot_prefs where bug_id=%d', $bug ) );
 
 	unless( $usrrec )

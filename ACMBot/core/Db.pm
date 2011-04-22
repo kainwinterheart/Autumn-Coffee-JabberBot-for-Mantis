@@ -44,14 +44,14 @@ sub connect
 			$db_str = 'dbname';
 		}
 
-		$self -> { dbh } = DBI -> connect( sprintf( 'DBI:%s:%s=%s;host=%s;port=%s',
-							    $self -> { ARGV } -> { dbdriver },
-							    $db_str,
-							    $self -> { ARGV } -> { dbname },
-							    $self -> { ARGV } -> { dbhost },
-							    $self -> { ARGV } -> { dbport } ),
-						   $self -> { ARGV } -> { dbuser },
-						   $self -> { ARGV } -> { dbpass } );
+		$self -> { dbh } = ( DBI -> connect( sprintf( 'DBI:%s:%s=%s;host=%s;port=%s',
+							      $self -> { ARGV } -> { dbdriver },
+							      $db_str,
+							      $self -> { ARGV } -> { dbname },
+							      $self -> { ARGV } -> { dbhost },
+							      $self -> { ARGV } -> { dbport } ),
+						     $self -> { ARGV } -> { dbuser },
+						     $self -> { ARGV } -> { dbpass } ) || undef );
 	}
 
 	return $self -> { dbh };
@@ -67,6 +67,19 @@ sub disconnect
 		{
 			$self -> { dbh } = undef;
 		}
+	}
+
+	return not defined $self -> { dbh };
+}
+
+sub reconnect
+{
+	my $self = shift;
+
+	if( $self -> disconnect() )
+	{
+		sleep 1;
+		$self -> connect();
 	}
 
 	return defined $self -> { dbh };
