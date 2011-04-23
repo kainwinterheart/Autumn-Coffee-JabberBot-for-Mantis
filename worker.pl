@@ -13,8 +13,7 @@ unless( $core )
 	die "Can't create Core.";
 }
 
-unless( 1 #$core -> set_callbacks( message => \&message_handler )
-and     $core -> set_auth_callback( \&register_user ) )
+unless( $core -> set_auth_callback( \&register_user ) )
 {
 	die 'Callbacks cannot be set.';
 }
@@ -51,9 +50,14 @@ while( 1 )
 			sleep 1;
 		}
 
-		while( not $core -> bot -> client -> Connected() )
+		while( not defined $core -> bot -> client )
 		{
 			print "\n\nNOTIFY: Reconnecting...\n\n";
+			sleep 1;
+		}
+
+		while( not $core -> bot -> client -> Connected() )
+		{
 			sleep 1;
 		}
 
@@ -333,8 +337,6 @@ sub get_subscription_info
 			my $msgdata = $users{ $userid } -> { 'msgdata' };
 			$users{ $userid } -> { 'msgdata' } = [ ( @$msgdata, @msg ) ];
 		}
-
-		# print "\n\n$lastid:$bug\n\n";
 
 		unless( $core -> db -> do( sprintf( 'update ac_bot_prefs set last_msg_id=%d, last_msg_time=NOW() where id=%d;', $lastid, $bug ) ) )
 		{
