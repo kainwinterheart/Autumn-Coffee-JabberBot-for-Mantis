@@ -66,6 +66,10 @@ sub connect
 						 resource => $self -> { ARGV } -> { jrsrc } );
 
 		$self -> { client } -> PresenceSend();
+		$self -> { client } -> PresenceSend( show      => $self -> { ARGV } -> { jrsrc },
+						     status    => $self -> { ARGV } -> { jrsrc },
+						     signature => $self -> { ARGV } -> { jrsrc } );
+
 		unless( $self -> roster_update() )
 		{
 			die 'Can\'t get roster.';
@@ -143,20 +147,13 @@ sub roster_update
 {
 	my $self = shift;
 
-	#unless( defined )
+	unless( defined $self -> { client } )
 	{
-		#my %proxy = $self -> { client } -> RosterGet();
-		#$self -> { roster } = \%proxy;
-		$self -> { client } -> RosterRequest();
-		$self -> { roster } = $self -> { client } -> Roster();
+		return undef;
 	}
 
-	#$self -> { roster } = $self -> { roster } -> RosterRequest();
-
-#	foreach my $key ( keys %{ $self -> { roster } } )
-#	{
-#		print $key . "\n";
-#	}
+	$self -> { client } -> RosterRequest();
+	$self -> { roster } = $self -> { client } -> Roster();
 
 	return $self -> { roster };
 }
