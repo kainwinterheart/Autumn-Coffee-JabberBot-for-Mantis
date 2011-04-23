@@ -27,6 +27,7 @@ while( 1 )
 
 	if( defined $status )
 	{
+		$last = time();
 		if( ( $last - $start ) >= ( ( $core -> config -> get( 'timeout' ) || 5 ) * 60 ) )
 		{
 			my $data = &get_subscription_info();
