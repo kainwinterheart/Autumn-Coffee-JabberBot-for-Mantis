@@ -66,6 +66,10 @@ sub connect
 						 resource => $self -> { ARGV } -> { jrsrc } );
 
 		$self -> { client } -> PresenceSend();
+		$self -> { client } -> PresenceSend( # type   => 'available',
+						     status => 'Available',
+						     show   => 'available' );
+
 		unless( $self -> roster_update() )
 		{
 			die 'Can\'t get roster.';
