@@ -23,12 +23,12 @@ my $last = $start;
 
 while( 1 )
 {
-	my $status = $core -> bot -> client -> Process( 1 );
+	my $status = $core -> bot -> client -> Process( 5 );
 
 	if( defined $status )
 	{
 		$last = time();
-		if( ( $last - $start ) >= ( ( $core -> config -> get( 'timeout' ) || 5 ) * 60 ) )
+		if( ( $last - $start ) >= ( ( int( $core -> config -> get( 'timeout' ) ) or 5 ) * 60 ) )
 		{
 			my $data = &get_subscription_info();
 			if( $data )
@@ -367,10 +367,10 @@ sub send_jabber_notification
 {
 	my $info = shift;
 
-	unless( $core -> bot -> roster_update() )
-	{
-		return 0;
-	}
+#	unless( $core -> bot -> roster_update() )
+#	{
+#		return 0;
+#	}
 
 	foreach my $userid ( keys %$info )
 	{
