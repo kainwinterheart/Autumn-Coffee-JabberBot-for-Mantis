@@ -154,15 +154,16 @@ sub register_user
 	my $self = $ACMBot::core::Actual;
 	my $jid = $msg -> GetFrom( 'jid' ) -> GetJID( 'base' );
 
-	unless( $self -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $core -> db -> quote( $jid ) ) ) )
+	unless( $self -> db -> select( sprintf( 'select id from ac_bot_users where jabber=%s', $self -> db -> quote( $jid ) ) ) )
 	{
-		unless( $self -> db -> do( sprintf( 'insert into ac_bot_users (jabber) values (%s) ', $core -> db -> quote( $jid ) ) ) )
+		unless( $self -> db -> do( sprintf( 'insert into ac_bot_users (jabber) values (%s) ', $self -> db -> quote( $jid ) ) ) )
 		{
 			return 0;
 		}
 	}
 
 	$self -> bot -> client -> Subscription( type => 'subscribe', to => $msg -> GetFrom() );
+	$self -> bot -> roster_update();
 
 	return 1;
 }
