@@ -368,10 +368,10 @@ sub send_jabber_notification
 {
 	my $info = shift;
 
-#	unless( $core -> bot -> roster_update() )
-#	{
-#		return 0;
-#	}
+	unless( $core -> bot -> dont_sleep() )
+	{
+		return 0;
+	}
 
 	foreach my $userid ( keys %$info )
 	{

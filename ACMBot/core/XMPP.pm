@@ -65,10 +65,7 @@ sub connect
 						 password => $self -> { ARGV } -> { jpass },
 						 resource => $self -> { ARGV } -> { jrsrc } );
 
-		$self -> { client } -> PresenceSend();
-		$self -> { client } -> PresenceSend( # type   => 'available',
-						     status => 'Available',
-						     show   => 'available' );
+		$self -> dont_sleep();
 
 		unless( $self -> roster_update() )
 		{
@@ -154,6 +151,7 @@ sub roster_update
 
 	$self -> { client } -> RosterRequest();
 	$self -> { roster } = $self -> { client } -> Roster();
+	$self -> dont_sleep();
 
 	return $self -> { roster };
 }
@@ -162,6 +160,20 @@ sub get_addresses
 {
 	my ( $self, $jid ) = @_;
 	return grep{ $_ } @{ $self -> { presence_db } -> { $jid } };
+}
+
+sub dont_sleep
+{
+	my $self = shift;
+
+	if( defined $self -> { client } )
+	{
+		$self -> { client } -> PresenceSend();
+		$self -> { client } -> PresenceSend( status => 'Available',
+						     show   => 'available' );
+	}
+
+	return defined $self -> { client };
 }
 
 sub __handle_subscribe
