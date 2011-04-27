@@ -31,20 +31,23 @@ while( 1 )
 		if( ( $last - $start ) >= ( ( int( $core -> config -> get( 'timeout' ) ) or 5 ) * 60 ) )
 		{
 			my $data = &get_subscription_info();
+
+			$start = $last;
+
 			if( $data )
 			{
 				unless( &send_jabber_notification( $data ) )
 				{
-					print "\n\nERROR: Can't send messages.\n\n";
+					print "ERROR: Can't send messages.\n";
 				}
 			} else
 			{
-				print "\n\nERROR: Can't get subscription info.\n\n";
+				print "ERROR: Can't get subscription info.\n";
 			}
 		}
 	} else
 	{
-		print "\n\nWARNING: Bot is not connected, trying to reconnect.\n\n";
+		print "WARNING: Bot is not connected, trying to reconnect.\n";
 
 		while( not $core -> bot -> disconnect() )
 		{
@@ -53,7 +56,7 @@ while( 1 )
 
 		while( not defined $core -> bot -> client )
 		{
-			print "\n\nNOTIFY: Reconnecting...\n\n";
+			print "NOTIFY: Reconnecting...\n";
 			sleep 1;
 		}
 
@@ -67,7 +70,7 @@ while( 1 )
 			sleep 1;
 		}
 
-		print "\n\nNOTIFY: Bot is online again.\n\n";
+		print "NOTIFY: Bot is online again.\n";
 	}
 }
 
@@ -124,6 +127,7 @@ sub message_handler
 		{
 			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Binding to Mantis user failed.' );
 		}
+=item
 	} elsif( $cmd =~ m/^debug$/i )
 	{
 		my $data = &get_subscription_info();
@@ -137,9 +141,13 @@ sub message_handler
 		{
 			$core -> bot -> send( to => $msg -> GetFrom(), body => 'Can\'t get subscription data.' );
 		}
+=cut
 	} elsif( $cmd =~ m/^help$/i )
 	{
 		$core -> bot -> send( to => $msg -> GetFrom(), body => 'Help message is in progress. Sorry for that.' );
+	} elsif( $cmd =~ m/^uptime$/i )
+	{
+		$core -> bot -> send( to => $msg -> GetFrom(), body => sprintf( 'Uptime is %d seconds.', $core -> uptime() ) );
 	} else
 	{
 		&echo( $sid, $msg );

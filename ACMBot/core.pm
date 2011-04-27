@@ -29,10 +29,13 @@ sub new
 		     mdb    => undef,
 		     bot    => undef,
 		     mantis => undef,
+		     uptime => undef,
 		     auth_callback => undef,
 		     ARGV   => \%args };
 
 	bless( $self, $class );
+
+	$self -> { uptime } = time();
 
 	unless( $self -> config( $args{ config } ) and
 		$self -> dbup() and
@@ -65,6 +68,12 @@ sub config
 	}
 
 	return $self ->  { config };
+}
+
+sub uptime
+{
+	my $self = shift;
+	return ( time() - $self -> { uptime } );
 }
 
 sub bot
